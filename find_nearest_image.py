@@ -162,7 +162,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=description, formatter_class=ArgparseFormatter, epilog=examples)
     parser.add_argument('mode', choices=['precalculate', 'search'], help='The mode in which you want to run')
 
-    parser.add_argument('--storage', '-p', help='Path to the precalculated data storage', required=True)
+    common_group = parser.add_argument_group('Common args (both modes)')
+    common_group.add_argument('--storage', '-p', help='Path to the precalculated data storage', required=True)
 
     precalculation_group = parser.add_argument_group('Precalculation mode')
     precalculation_group.add_argument('--fork', '-f', help='Number of parallel processes for precalculation '

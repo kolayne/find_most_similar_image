@@ -28,6 +28,8 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+
+Common args (both modes):
   --storage STORAGE, -p STORAGE
                         Path to the precalculated data storage
 
