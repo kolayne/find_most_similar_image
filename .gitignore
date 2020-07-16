@@ -129,4 +129,5 @@ dmypy.json
 .pyre/
 
 # Local
-**.json # Ignore generated storages
+# Ignore generated storages:
+**.json
