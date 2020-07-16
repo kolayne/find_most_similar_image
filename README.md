@@ -45,3 +45,5 @@ Examples:
     ./find_nearest_image.py precalculate --storage dir1_storage.json --dir ./dir1
     ./find_nearest_image.py search --storage dir1_storage.json --target img1.png
 ```
+## Known issues
+* Tqdm bars may behave strange (for example, create empty lines or fake bars) with forking
