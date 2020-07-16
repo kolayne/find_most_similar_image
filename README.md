@@ -16,7 +16,7 @@ Imagine you are given a directory with a HUGE amount of images inside and someth
 
 This script allows you to find an image (in fact images) visually nearest to a given (target) image.
 
-It also allows to quickly search for images, similar to different targets.
+It also allows to quickly search for images, similar to different targets, if you are searching in the same folder.
 
 Abstract usage:
     1. Precalculate data for an images set (multiprocessing is out of the box)

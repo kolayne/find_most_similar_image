@@ -92,7 +92,7 @@ def get_sorted(target_path, storage_path, reverse=False):
 description = '''Sorts an array of images by color similarity to a given image.\n\n
 Imagine you are given a directory with a HUGE amount of images inside and something like a screenshot of one of them.\n
 This script allows you to find an image (in fact images) visually nearest to a given (target) image.\n
-It also allows to quickly search for images, similar to different targets.\n\n
+It also allows to quickly search for images, similar to different targets, if you are searching in the same folder.\n\n
 Abstract usage:
     1. Precalculate data for an images set (multiprocessing is out of the box)
     2. Search for images similar to target
