@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from sys import argv, stderr
-from os import listdir, path
+from os import listdir, walk, path
 import json
 import argparse
 from multiprocessing import Pool
@@ -8,7 +8,7 @@ import warnings
 from operator import itemgetter
 
 import numpy as np
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 try:
     from tqdm import tqdm
 except ImportError:
@@ -24,6 +24,27 @@ try:
 except ImportError:
     print("`tabulate` library not found. This is not an issue, but I would recommend to install it")
     def tabulate(x, *a, **k): return '\t'.join(x)
+
+
+def does_raise(func, args=None, kwargs=None, expected=None, *, reraise_other=True):
+    if args is None:
+        args = ()
+    if kwargs is None:
+        kwargs = {}
+    if expected is None:
+        expected = Exception
+
+    try:
+        func(*args, **kwargs)
+        return False
+    except expected:
+        return True
+    except:
+        if reraise_other:
+            raise
+        else:
+            return False
+
 
 
 def chunkify(iterable, chunks_count):
@@ -160,8 +181,9 @@ if __name__ == "__main__":
         if args.dir is None:
             parser.error("--dir argument is required in precalculation mode")
 
-        precalculate((path.join(args.dir, i) for i in listdir(args.dir)), args.storage, args.split_depth,
-                process_count=args.fork)
+        candidates = (path.join(i[0], j) for i in walk(args.dir) for j in i[2])
+        candidates = filter(lambda x: not does_raise(Image.open, (x,), expected=UnidentifiedImageError), candidates)
+        precalculate(candidates, args.storage, args.split_depth, process_count=args.fork)
 
         print(colored('Done!', attrs=['bold', 'blink']))
     elif args.mode == 'search':
@@ -172,4 +194,4 @@ if __name__ == "__main__":
         print(tabulate(rated_images, headers=("Path to image", "Error rate"), tablefmt="github", showindex=True))
         print("\nRemember that the printed list is reversed: the lower items are, the more they look like a target")
         print("Please, also, note, that \"Error rate\" (last column) can differ a lot for different split depths. "
-                "Don't compare error rates from different runs")
+                "Don't compare error rates from runs with different split depths")
