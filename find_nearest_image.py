@@ -5,6 +5,7 @@ import json
 import argparse
 from multiprocessing import Pool
 import warnings
+from operator import itemgetter
 
 import numpy as np
 from PIL import Image
@@ -18,6 +19,11 @@ try:
 except ImportError:
     print("`termcolor` library not found. This is not an issue, but I would recommend to install it")
     def colored(x, *a, **k): return x
+try:
+    from tabulate import tabulate
+except ImportError:
+    print("`tabulate` library not found. This is not an issue, but I would recommend to install it")
+    def tabulate(x, *a, **k): return '\t'.join(x)
 
 
 def chunkify(iterable, chunks_count):
@@ -84,9 +90,9 @@ def get_sorted(target_path, storage_path, reverse=False):
     
     target = Image.open(target_path)
     target_avg = get_avg_pixels(target, split_depth)
-
-    return sorted(list(precalculated_avgs.keys()),
-            key=lambda k: get_avged_imgs_dist(target_avg, precalculated_avgs[k]), reverse=reverse)
+    
+    rated_images = [(k, get_avged_imgs_dist(target_avg, precalculated_avgs[k])) for k in precalculated_avgs.keys()]
+    return sorted(rated_images, key=itemgetter(1), reverse=reverse)
 
 
 description = '''Sorts an array of images by color similarity to a given image.\n\n
@@ -162,5 +168,8 @@ if __name__ == "__main__":
         if args.target is None:
             parser.error("--target argument is required in search mode")
         print("I will reprint all the imags files. The lower they are in the list, the more they look like a target\n")
-        print('\n'.join(get_sorted(args.target, args.storage, reverse=True)))
+        rated_images = get_sorted(args.target, args.storage, reverse=True)
+        print(tabulate(rated_images, headers=("Path to image", "Error rate"), tablefmt="github", showindex=True))
         print("\nRemember that the printed list is reversed: the lower items are, the more they look like a target")
+        print("Please, also, note, that \"Error rate\" (last column) can differ a lot for different split depths. "
+                "Don't compare error rates from different runs")
