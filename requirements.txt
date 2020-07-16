@@ -1,0 +1,4 @@
+pillow
+numpy
+tqdm # Not required but recommended
+termcolor # Not required but suggested
