@@ -1,6 +1,6 @@
 #!/usr/bin/python3
-from sys import argv, stderr
-from os import listdir, walk, path
+from sys import argv
+from os import walk, path
 import json
 import argparse
 from multiprocessing import Pool
