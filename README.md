@@ -1,4 +1,4 @@
-# find_nearest_image
+# Find most similar image
 Sorts an array of images by color similarity to a given image.
 
 Imagine you are given a directory with a HUGE amount of images inside and something like a screenshot of one of them.
