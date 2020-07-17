@@ -47,5 +47,11 @@ Examples:
     ./find_nearest_image.py precalculate --storage dir1_storage.json --dir ./dir1
     ./find_nearest_image.py search --storage dir1_storage.json --target img1.png
 ```
+## Algorithm overview
+The algorithm of looking for similar images is pretty simple.
+
+Firstly (in `precalculate` mode), the app creates a storage with cached data of images inside `--dir` and it's subdirectories. Each of these images is split into `--split-depth` * `--split-depth` (approximately) equal rectangles, and an average color value is calculated for each of the rectangles. These average colors (and some meta data) are stored in the `--storage` file.
+
+After that (in `search` mode), the `--storage` file is read, the `--target` image is split into the same number of rectangles the candidates were split into, the average colors for the last rectangles are calculated. A distance between two images now is the sum of distances between corresponding average colors. All the images are sorted by a value called `Error rate` which is the distance between an image and the target image.
 ## Known issues
 * Tqdm bars may behave strange (for example, create empty lines or fake bars) with forking
