@@ -6,6 +6,7 @@ import argparse
 from multiprocessing import Pool
 import warnings
 from operator import itemgetter
+from io import StringIO
 
 import numpy as np
 from PIL import Image, UnidentifiedImageError
@@ -88,7 +89,7 @@ def precalculate_part(args):
     return {candidate_path: get_avg_pixels(Image.open(candidate_path).convert("RGB"), split_depth).tolist()
             for candidate_path in tqdm(candidate_paths, position=tqdm_position)}
 
-def precalculate(candidate_paths, output_path, /, split_depth=2, process_count=1):
+def precalculate(candidate_paths, output_file, /, split_depth=2, process_count=1):
     data = {}
 
     idxs_and_chunks = enumerate(chunkify(candidate_paths, process_count))
@@ -98,14 +99,11 @@ def precalculate(candidate_paths, output_path, /, split_depth=2, process_count=1
         for data_part in pool.imap_unordered(precalculate_part, args):
             data = {**data, **data_part}
 
-    with open(output_path, "w") as f:
-        json.dump({'split_depth': split_depth, 'data': data}, f)
+    json.dump({'split_depth': split_depth, 'data': data}, output_file)
 
 
-def get_sorted(target_path, storage_path, reverse=False):
-    with open(storage_path, "r") as f:
-        precalculated = json.load(f)
-
+def get_sorted(target_path, storage_file, reverse=False):
+    precalculated = json.load(storage_file)
     split_depth = precalculated['split_depth']
     precalculated_avgs = {k: np.asarray(v) for k, v in precalculated['data'].items()}
     
@@ -119,79 +117,87 @@ def get_sorted(target_path, storage_path, reverse=False):
 description = '''Sorts an array of images by color similarity to a given image.\n\n
 Imagine you are given a directory with a HUGE amount of images inside and something like a screenshot of one of them.\n
 This script allows you to find an image (in fact images) visually nearest to a given (target) image.\n
-It also allows to quickly search for images, similar to different targets, if you are searching in the same folder.\n\n
+It also allows to quickly search for images, similar to different targets, if you are searching inside the same folder.\n\n
 Abstract usage:
-    1. Precalculate data for an images set (multiprocessing is out of the box)
+    1. Precalculate data for an images set (multiprocessing is out of the box, see --fork)
     2. Search for images similar to target
 '''
 
 examples = f'''Examples:
-    {argv[0]} precalculate --storage dir1_storage.json --dir ./dir1
-    {argv[0]} search --storage dir1_storage.json --target img1.png
+    With two commands:
+        {argv[0]} --mode precalculate --storage storage.json --dir ./some_dir
+        {argv[0]} --mode search --storage storage.json --target some_img.png
+    Or with one command:
+        {argv[0]} --dir some_dir --target some_img.png
+    Also possible (to save storage):
+        {argv[0]} --dir some_dir --target some_img.png --storage storage.json
 '''
 
 
 if __name__ == "__main__":
-    # The following class is from https://stackoverflow.com/a/26986546/11248508
-    class ArgparseFormatter(argparse.RawTextHelpFormatter):
-        # use defined argument order to display usage
-        def _format_usage(self, usage, actions, groups, prefix):
-            if prefix is None:
-                prefix = 'usage: '
-
-            # if usage is specified, use that
-            if usage is not None:
-                usage = usage % dict(prog=self._prog)
-
-            # if no optionals or positionals are available, usage is just prog
-            elif not actions:
-                usage = '%(prog)s' % dict(prog=self._prog)
-            elif usage is None:
-                prog = '%(prog)s' % dict(prog=self._prog)
-                # build full usage string
-                action_usage = self._format_actions_usage(actions, groups) # NEW
-                usage = ' '.join([s for s in [prog, action_usage] if s])
-                # omit the long line wrapping code
-            # prefix with 'usage:'
-            return '%s%s\n\n' % (prefix, usage)
-
-
     warnings.filterwarnings("ignore", category=UserWarning)
 
 
-    parser = argparse.ArgumentParser(description=description, formatter_class=ArgparseFormatter, epilog=examples)
-    parser.add_argument('mode', choices=['precalculate', 'search'], help='The mode in which you want to run')
+    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter,
+            epilog=examples)
 
-    common_group = parser.add_argument_group('Common args (both modes)')
-    common_group.add_argument('--storage', '-p', help='Path to the precalculated data storage', required=True)
+    common_group = parser.add_argument_group('Global args')
+    common_group.add_argument('--mode', '-m', choices=['precalculate', 'search', 'onflight'],
+            help='The mode in which you want to run (`precalculate` to create storage, `search` to search '
+            'for images using storage, `onflight` (DEFAULT) is precalculate+search)',
+            default='onflight')
+    common_group.add_argument('--storage', '-p', help='Path to a data storage (to be created or read)')
 
-    precalculation_group = parser.add_argument_group('Precalculation mode')
+    precalculation_group = parser.add_argument_group('Precalculation (or onflight) mode')
     precalculation_group.add_argument('--fork', '-f', help='Number of parallel processes for precalculation '
-        '(default 1)', type=int, default=1)
+        '(DEFAULT 1)', type=int, default=1)
     precalculation_group.add_argument('--dir', '-d', help='Path to the direcotory with images to precalculate data for')
     precalculation_group.add_argument('--split-depth', '-s', help='When calculating average colors, all images '
-        'are split into SPLIT_DEPTH**2 rectangles, average color is calculated for each of them. (default 4)', type=int,
+        'are split into SPLIT_DEPTH**2 rectangles, average color is calculated for each of them. (DEFAULT 4)', type=int,
         default=4)
 
-    search_group = parser.add_argument_group('Search mode')
+    search_group = parser.add_argument_group('Search (or onflight) mode')
     search_group.add_argument('--target', '-t', help='Path to the target image to search similar to (note that split '
             'depth is detected automatically from the storage)')
 
-    args = parser.parse_args()
-    if args.mode == 'precalculate':
-        if args.dir is None:
-            parser.error("--dir argument is required in precalculation mode")
+    virtual_file = StringIO()
 
+    args = parser.parse_args()
+
+    # Required args checks
+    if args.storage is None and args.mode != 'onflight':
+            parser.error("--storage argument can only be omited in the `onflight` mode")
+    if args.mode in ('precalculate', 'onflight'):
+        if args.dir is None:
+            parser.error("--dir argument is required in the current mode")
+    if args.mode in ('search', 'onflight'):
+        if args.target is None:
+            parser.error("--target argument is required in the current mode")
+
+    # Precalculating
+    if args.mode in ('precalculate', 'onflight'):
         candidates = (path.join(i[0], j) for i in walk(args.dir) for j in i[2])
         candidates = filter(lambda x: not does_raise(Image.open, (x,), expected=UnidentifiedImageError), candidates)
-        precalculate(candidates, args.storage, args.split_depth, process_count=args.fork)
+        precalculate(candidates, virtual_file, args.split_depth, process_count=args.fork)
+        virtual_file.seek(0)
 
-        print(colored('Done!', attrs=['bold', 'blink']))
+        print(colored("Precalculation's finished!", attrs=['bold', 'blink']))
+
+    # Synchronizing files
+    if args.mode in ('precalculate', 'onflight'):
+        if args.storage is not None:
+            with open(args.storage, "w") as f:
+                f.write(virtual_file.read())
+            virtual_file.seek(0)
     elif args.mode == 'search':
-        if args.target is None:
-            parser.error("--target argument is required in search mode")
+        with open(args.storage, "r") as f:
+            virtual_file.write(f.read())
+        virtual_file.seek(0)
+
+    # Searching
+    if args.mode in ('search', 'onflight'):
         print("I will reprint all the imags files. The lower they are in the list, the more they look like a target\n")
-        rated_images = get_sorted(args.target, args.storage, reverse=True)
+        rated_images = get_sorted(args.target, virtual_file, reverse=True)
         print(tabulate(rated_images, headers=("Path to image", "Error rate"), tablefmt="github", showindex=True))
         print("\nRemember that the printed list is reversed: the lower items are, the more they look like a target")
         print("Please, also, note, that \"Error rate\" (last column) can differ a lot for different split depths. "
