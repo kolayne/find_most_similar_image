@@ -1,5 +1,5 @@
-pillow
-numpy
-tqdm # Not required but recommended
-tabulate # Not required but recommended
-termcolor # Not required but suggested
+Pillow~=7.2.0
+numpy~=1.19.1
+tqdm~=4.48.0 # Not required but recommended
+tabulate~=0.8.7 # Not required but recommended
+termcolor~=1.1.0 # Not required but suggested
