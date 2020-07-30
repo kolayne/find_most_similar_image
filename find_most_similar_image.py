@@ -114,76 +114,97 @@ def get_sorted(target_path, storage_file, reverse=False):
     return sorted(rated_images, key=itemgetter(1), reverse=reverse)
 
 
-description = '''Sorts an array of images by color similarity to a given image.\n\n
-Imagine you are given a directory with a HUGE amount of images inside and something like a screenshot of one of them.\n
-This script allows you to find an image (in fact images) visually nearest to a given (target) image.\n
-It also allows to quickly search for images, similar to different targets, if you are searching inside the same folder.\n\n
+description = '''PLASE, NOTE, by default only REQUIRED arguments are displayed in the help message. Use -h/--help \
+argument TWICE to also see OPTIONAL arguments
+
+Sorts an array of images by color similarity to a given image.
+Imagine you are given a directory with a HUGE amount of images inside and something like a screenshot of one of them.
+This script allows you to find an image (in fact images) visually nearest to a given (target) image.
+It also allows to quickly search for images, similar to different targets, if you are searching in the same set of \
+images.
+
 Abstract usage:
-    1. Precalculate data for an images set (multiprocessing is out of the box, see --fork)
-    2. Search for images similar to target
+    1. Precalculate data for an images set (multiprocessing is out of the box, see --fork at detailed help)
+    2. Search for images an similar to the target
+This two steps can be combined into one with the ONFLIGHT mode (default)
 '''
 
 examples = f'''Examples:
-    With two commands:
-        {argv[0]} --mode precalculate --storage storage.json --dir ./some_dir
-        {argv[0]} --mode search --storage storage.json --target some_img.png
+    With two separate commands:
+        {argv[0]} --mode precalculate --storage ./storage.json --dir ./source_dir
+        {argv[0]} --mode search --storage ./storage.json --target ./image.png
     Or with one command:
-        {argv[0]} --dir some_dir --target some_img.png
+        {argv[0]} --dir ./source_dir --target ./image.png
     Also possible (to save storage):
-        {argv[0]} --dir some_dir --target some_img.png --storage storage.json
-    When you want to omit any extra messages and, for example, use output as an argument to another command:
-        {argv[0]} --storage storage.json --target some_img.png --dir ./some_dir --best-only --table-fmt=plain \\
-            --no-headers --no-notes --no-index --no-error-rate
+        {argv[0]} --dir ./source_dir --target ./image.png --storage ./storage.json
+    When you want to omit all extra messages and, for example, use the output as an argument to another command:
+        {argv[0]} --dir ./source_dir --target ./image.png --best-only --table-fmt=plain --no-headers --no-notes \\
+            --no-index --no-error-rate
 '''
 
 
 if __name__ == "__main__":
     warnings.filterwarnings("ignore", category=UserWarning)
 
-    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter,
-                                     epilog=examples)
+    hidden_arg_help_message = argparse.SUPPRESS
 
-    common_group = parser.add_argument_group('Global args')
+    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter,
+                                     epilog=examples, add_help=False)
+    parser.add_argument('--help', '-h', action='count', default=0, help='Show help message and exit. Use it once (-h) '
+                                                                        'to only see most needed arguments, twice '
+                                                                        '(-hh) for detailed help with all arguments '
+                                                                        'described')
+
+    is_long_help_request = parser.parse_known_args()[0].help >= 2
+
+    common_group = parser.add_argument_group('GLOBAL args')
     common_group.add_argument('--mode', '-m', choices=['precalculate', 'search', 'onflight'],
-                              help='The mode in which you want to run (`precalculate` to create storage, `search` to '
-                                   'search for images using storage, `onflight` (DEFAULT) is precalculate+search)',
+                              help='The mode in which you want to run ("precalculate" to create storage, "search" to '
+                                   'search for images using storage, "onflight" (DEFAULT) is precalculate+search)',
                               default='onflight')
     common_group.add_argument('--storage', '-p', help='Path to a data storage (to be created or read)')
 
-    precalculation_group = parser.add_argument_group('Precalculation (or onflight) mode')
-    precalculation_group.add_argument('--fork', '-f', help='Number of parallel processes for precalculation '
-                                                           '(DEFAULT 1)', type=int, default=1)
+    precalculation_group = parser.add_argument_group('PRECALCULATION (or ONFLIGHT) mode arguments')
+    if is_long_help_request:
+        hidden_arg_help_message = 'Number of parallel processes for precalculation (DEFAULT 1)'
+    precalculation_group.add_argument('--fork', '-f', help=hidden_arg_help_message, type=int, default=1)
     precalculation_group.add_argument('--dir', '-d', help='Path to the directory with images to precalculate data for')
-    precalculation_group.add_argument('--split-depth', '-s', help='When calculating average colors, all images are '
-                                                                  'split into SPLIT_DEPTH**2 rectangles, average color '
-                                                                  'is calculated for each of them. (DEFAULT 4)',
-                                      type=int,
-                                      default=4)
+    if is_long_help_request:
+        hidden_arg_help_message = 'When calculating average colors, all images are split into SPLIT_DEPTH^2 ' \
+                                  'rectangles, average color is calculated for each of them. (DEFAULT 4)'
+    precalculation_group.add_argument('--split-depth', '-s', help=hidden_arg_help_message, type=int, default=4)
 
-    search_group = parser.add_argument_group('Search (or onflight) mode')
+    search_group = parser.add_argument_group('SEARCH (or ONFLIGHT) mode arguments')
     search_group.add_argument('--target', '-t', help='Path to the target image to search similar to (note that split '
                                                      'depth is detected automatically from the storage)')
 
-    ui_group = parser.add_argument_group('Output style of search (or onflight) mode')
-    ui_group.add_argument('--best-only', '-b', help='Only print one image filename which is the best match',
-                          default=False, action='store_true')
-    ui_group.add_argument('--no-notes', help='Don\'t show constant notes for user, only print the final table',
-                          default=False, action='store_true')
-    ui_group.add_argument('--table-fmt', help='Table format (explained in more detail in the `tabulate` library\'s'
-                                              'docs). Use "plain" to not use any pseudo-graphics (DEFAULT "github")',
-                          type=str, default="github")
-    ui_group.add_argument('--no-headers', help='Don\'t show headers of the final table being printed', default=False,
-                          action='store_true')
-    ui_group.add_argument('--no-index', help='Don\'t show first column with indexes in the final table being '
-                                             'printed',
-                          default=False, action='store_true')
-    ui_group.add_argument('--no-error-rate', help='Don\'t show last column with error rate in the final table '
-                                                  'being printed',
-                          default=False, action='store_true')
-
-    virtual_file = StringIO()
+    ui_group = parser.add_argument_group('OUTPUT STYLE of search (or onflight) mode')
+    if is_long_help_request:
+        hidden_arg_help_message = 'Only print one image filename which is the best match'
+    ui_group.add_argument('--best-only', '-b', help=hidden_arg_help_message, default=False, action='store_true')
+    if is_long_help_request:
+        hidden_arg_help_message = 'Don\'t show constant notes for user, only print the final table'
+    ui_group.add_argument('--no-notes', help=hidden_arg_help_message, default=False, action='store_true')
+    if is_long_help_request:
+        hidden_arg_help_message = 'Table format (explained in detail in the `tabulate` library\'s docs). Use ' \
+                                  '"plain" to not use any pseudo-graphics (DEFAULT "github")'
+    ui_group.add_argument('--table-fmt', help=hidden_arg_help_message, type=str, default="github")
+    if is_long_help_request:
+        hidden_arg_help_message = 'Don\'t show headers of the final table being printed'
+    ui_group.add_argument('--no-headers', help=hidden_arg_help_message, default=False, action='store_true')
+    if is_long_help_request:
+        hidden_arg_help_message = 'Don\'t show first column with indexes in the final table being printed'
+    ui_group.add_argument('--no-index', help=hidden_arg_help_message, default=False, action='store_true')
+    if is_long_help_request:
+        hidden_arg_help_message = 'Don\'t show last column with error rate in the final table being printed'
+    ui_group.add_argument('--no-error-rate', help=hidden_arg_help_message, default=False, action='store_true')
 
     args = parser.parse_args()
+    if args.help:
+        parser.print_help()
+        exit(0)
+
+    virtual_file = StringIO()
 
     # Required args checks
     if args.storage is None and args.mode != 'onflight':
