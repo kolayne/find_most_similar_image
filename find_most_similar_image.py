@@ -10,6 +10,7 @@ from io import StringIO
 
 import numpy as np
 from PIL import Image, UnidentifiedImageError
+
 try:
     from tqdm import tqdm
 except ImportError:
@@ -105,10 +106,10 @@ def get_sorted(target_path, storage_file, reverse=False):
     precalculated = json.load(storage_file)
     split_depth = precalculated['split_depth']
     precalculated_avgs = {k: np.asarray(v) for k, v in precalculated['data'].items()}
-    
+
     target = Image.open(target_path)
     target_avg = get_avg_pixels(target, split_depth)
-    
+
     rated_images = [(k, get_avged_images_dist(target_avg, precalculated_avgs[k])) for k in precalculated_avgs.keys()]
     return sorted(rated_images, key=itemgetter(1), reverse=reverse)
 
@@ -130,6 +131,9 @@ examples = f'''Examples:
         {argv[0]} --dir some_dir --target some_img.png
     Also possible (to save storage):
         {argv[0]} --dir some_dir --target some_img.png --storage storage.json
+    When you want to omit any extra messages and, for example, use output as an argument to another command:
+        {argv[0]} --storage storage.json --target some_img.png --dir ./some_dir --best-only --table-fmt=plain \\
+            --no-headers --no-notes --no-index --no-error-rate
 '''
 
 
@@ -160,13 +164,30 @@ if __name__ == "__main__":
     search_group.add_argument('--target', '-t', help='Path to the target image to search similar to (note that split '
                                                      'depth is detected automatically from the storage)')
 
+    ui_group = parser.add_argument_group('Output style of search (or onflight) mode')
+    ui_group.add_argument('--best-only', '-b', help='Only print one image filename which is the best match',
+                          default=False, action='store_true')
+    ui_group.add_argument('--no-notes', help='Don\'t show constant notes for user, only print the final table',
+                          default=False, action='store_true')
+    ui_group.add_argument('--table-fmt', help='Table format (explained in more detail in the `tabulate` library\'s'
+                                              'docs). Use "plain" to not use any pseudo-graphics (DEFAULT "github")',
+                          type=str, default="github")
+    ui_group.add_argument('--no-headers', help='Don\'t show headers of the final table being printed', default=False,
+                          action='store_true')
+    ui_group.add_argument('--no-index', help='Don\'t show first column with indexes in the final table being '
+                                             'printed',
+                          default=False, action='store_true')
+    ui_group.add_argument('--no-error-rate', help='Don\'t show last column with error rate in the final table '
+                                                  'being printed',
+                          default=False, action='store_true')
+
     virtual_file = StringIO()
 
     args = parser.parse_args()
 
     # Required args checks
     if args.storage is None and args.mode != 'onflight':
-        parser.error("--storage argument can only be omited in the `onflight` mode")
+        parser.error("--storage argument can only be omitted in the `onflight` mode")
     if args.mode in ('precalculate', 'onflight'):
         if args.dir is None:
             parser.error("--dir argument is required in the current mode")
@@ -196,9 +217,24 @@ if __name__ == "__main__":
 
     # Searching
     if args.mode in ('search', 'onflight'):
-        print("I will reprint all the images files. The lower they are in the list, the more they look like a target\n")
+        if not args.no_notes:
+            print("I will reprint all the images files. The lower they are in the list, the more they look like a "
+                  "target\n")
+
         rated_images = get_sorted(args.target, virtual_file, reverse=True)
-        print(tabulate(rated_images, headers=("Path to image", "Error rate"), tablefmt="github", showindex=True))
-        print("\nRemember that the printed list is reversed: the lower items are, the more they look like a target")
-        print("Please, also, note, that \"Error rate\" (last column) can differ a lot for different split depths. "
-              "Don't compare error rates from runs with different split depths")
+        if args.no_error_rate:
+            rated_images = [(i[0],) for i in rated_images]
+        if args.best_only:
+            rated_images = [rated_images[-1]]
+
+        headers = ("Path to image", "Error rate")
+        if args.no_headers:
+            headers = ()
+        show_index = not args.no_index
+        if args.no_index:
+            show_index = None
+        print(tabulate(rated_images, headers=headers, tablefmt=args.table_fmt, showindex=show_index))
+        if not args.no_notes:
+            print("\nRemember that the printed list is reversed: the lower items are, the more they look like a target")
+            print("Please, also, note, that \"Error rate\" (last column) can differ a lot for different split depths. "
+                  "Don't compare error rates from runs with different split depths")
