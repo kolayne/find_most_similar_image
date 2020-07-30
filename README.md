@@ -12,13 +12,13 @@ $ ./find_most_similar_image.py -h
 usage: find_most_similar_image.py [--help]
                                   [--mode {precalculate,search,onflight}]
                                   [--storage STORAGE] [--dir DIR]
-                                  [--target TARGET]
+                                  [--target TARGET] [--suppress-extras]
 
 PLASE, NOTE, by default only REQUIRED arguments are displayed in the help message. Use -h/--help argument TWICE to also see OPTIONAL arguments
 
 Sorts an array of images by color similarity to a given image.
 Imagine you are given a directory with a HUGE amount of images inside and something like a screenshot of one of them.
-This script allows you to find an image (in fact images) visually nearest to a given (target) image.
+This script allows you to find an image (in fact images) visually nearest to a given (target) image. It prints a table with absolute paths to original images sorted by similarity so that last entry is the most similar to the target
 It also allows to quickly search for images, similar to different targets, if you are searching in the same set of images.
 
 Abstract usage:
@@ -41,6 +41,8 @@ PRECALCULATION (or ONFLIGHT) mode arguments:
 SEARCH (or ONFLIGHT) mode arguments:
   --target TARGET, -t TARGET
                         Path to the target image to search similar to (note that split depth is detected automatically from the storage)
+  --suppress-extras, -x
+                        Just print absolute path to the most similar image, suppress any other output. Equivalent to "--best-only --no-notes --table-fmt plane --no-headers --no-index --no-error-rate"
 
 Examples:
     With two separate commands:
@@ -61,7 +63,8 @@ usage: find_most_similar_image.py [--help]
                                   [--mode {precalculate,search,onflight}]
                                   [--storage STORAGE] [--fork FORK]
                                   [--dir DIR] [--split-depth SPLIT_DEPTH]
-                                  [--target TARGET] [--best-only] [--no-notes]
+                                  [--target TARGET] [--suppress-extras]
+                                  [--best-only] [--no-notes]
                                   [--table-fmt TABLE_FMT] [--no-headers]
                                   [--no-index] [--no-error-rate]
 
@@ -69,7 +72,7 @@ PLASE, NOTE, by default only REQUIRED arguments are displayed in the help messag
 
 Sorts an array of images by color similarity to a given image.
 Imagine you are given a directory with a HUGE amount of images inside and something like a screenshot of one of them.
-This script allows you to find an image (in fact images) visually nearest to a given (target) image.
+This script allows you to find an image (in fact images) visually nearest to a given (target) image. It prints a table with absolute paths to original images sorted by similarity so that last entry is the most similar to the target
 It also allows to quickly search for images, similar to different targets, if you are searching in the same set of images.
 
 Abstract usage:
@@ -95,6 +98,8 @@ PRECALCULATION (or ONFLIGHT) mode arguments:
 SEARCH (or ONFLIGHT) mode arguments:
   --target TARGET, -t TARGET
                         Path to the target image to search similar to (note that split depth is detected automatically from the storage)
+  --suppress-extras, -x
+                        Just print absolute path to the most similar image, suppress any other output. Equivalent to "--best-only --no-notes --table-fmt plane --no-headers --no-index --no-error-rate"
 
 OUTPUT STYLE of search (or onflight) mode:
   --best-only, -b       Only print one image filename which is the best match
