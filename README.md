@@ -6,67 +6,116 @@ Imagine you are given a directory with a HUGE amount of images inside and someth
 This script allows you to find an image (in fact images) visually nearest to a given (target) image.
 
 It also allows to quickly search for images, similar to different targets, if you are searching in the same folder
-## Usage
+## Basic usage
 ```
 $ ./find_most_similar_image.py -h
-usage: find_most_similar_image.py [-h] [--mode {precalculate,search,onflight}]
+usage: find_most_similar_image.py [--help]
+                                  [--mode {precalculate,search,onflight}]
+                                  [--storage STORAGE] [--dir DIR]
+                                  [--target TARGET]
+
+PLASE, NOTE, by default only REQUIRED arguments are displayed in the help message. Use -h/--help argument TWICE to also see OPTIONAL arguments
+
+Sorts an array of images by color similarity to a given image.
+Imagine you are given a directory with a HUGE amount of images inside and something like a screenshot of one of them.
+This script allows you to find an image (in fact images) visually nearest to a given (target) image.
+It also allows to quickly search for images, similar to different targets, if you are searching in the same set of images.
+
+Abstract usage:
+    1. Precalculate data for an images set (multiprocessing is out of the box, see --fork at detailed help)
+    2. Search for images an similar to the target
+This two steps can be combined into one with the ONFLIGHT mode (default)
+
+optional arguments:
+  --help, -h            Show help message and exit. Use it once (-h) to only see most needed arguments, twice (-hh) for detailed help with all arguments described
+
+GLOBAL args:
+  --mode {precalculate,search,onflight}, -m {precalculate,search,onflight}
+                        The mode in which you want to run ("precalculate" to create storage, "search" to search for images using storage, "onflight" (DEFAULT) is precalculate+search)
+  --storage STORAGE, -p STORAGE
+                        Path to a data storage (to be created or read)
+
+PRECALCULATION (or ONFLIGHT) mode arguments:
+  --dir DIR, -d DIR     Path to the directory with images to precalculate data for
+
+SEARCH (or ONFLIGHT) mode arguments:
+  --target TARGET, -t TARGET
+                        Path to the target image to search similar to (note that split depth is detected automatically from the storage)
+
+Examples:
+    With two separate commands:
+        ./find_most_similar_image.py --mode precalculate --storage ./storage.json --dir ./source_dir
+        ./find_most_similar_image.py --mode search --storage ./storage.json --target ./image.png
+    Or with one command:
+        ./find_most_similar_image.py --dir ./source_dir --target ./image.png
+    Also possible (to save storage):
+        ./find_most_similar_image.py --dir ./source_dir --target ./image.png --storage ./storage.json
+    When you want to omit all extra messages and, for example, use the output as an argument to another command:
+        ./find_most_similar_image.py --dir ./source_dir --target ./image.png --best-only --table-fmt=plain --no-headers --no-notes \
+            --no-index --no-error-rate
+```
+## Advanced usage
+```
+$ ./find_most_similar_image.py -hh
+usage: find_most_similar_image.py [--help]
+                                  [--mode {precalculate,search,onflight}]
                                   [--storage STORAGE] [--fork FORK]
                                   [--dir DIR] [--split-depth SPLIT_DEPTH]
                                   [--target TARGET] [--best-only] [--no-notes]
                                   [--table-fmt TABLE_FMT] [--no-headers]
                                   [--no-index] [--no-error-rate]
 
+PLASE, NOTE, by default only REQUIRED arguments are displayed in the help message. Use -h/--help argument TWICE to also see OPTIONAL arguments
+
 Sorts an array of images by color similarity to a given image.
-
 Imagine you are given a directory with a HUGE amount of images inside and something like a screenshot of one of them.
-
 This script allows you to find an image (in fact images) visually nearest to a given (target) image.
-
-It also allows to quickly search for images, similar to different targets, if you are searching inside the same folder.
+It also allows to quickly search for images, similar to different targets, if you are searching in the same set of images.
 
 Abstract usage:
-    1. Precalculate data for an images set (multiprocessing is out of the box, see --fork)
-    2. Search for images similar to target
+    1. Precalculate data for an images set (multiprocessing is out of the box, see --fork at detailed help)
+    2. Search for images an similar to the target
+This two steps can be combined into one with the ONFLIGHT mode (default)
 
 optional arguments:
-  -h, --help            show this help message and exit
+  --help, -h            Show help message and exit. Use it once (-h) to only see most needed arguments, twice (-hh) for detailed help with all arguments described
 
-Global args:
+GLOBAL args:
   --mode {precalculate,search,onflight}, -m {precalculate,search,onflight}
-                        The mode in which you want to run (`precalculate` to create storage, `search` to search for images using storage, `onflight` (DEFAULT) is precalculate+search)
+                        The mode in which you want to run ("precalculate" to create storage, "search" to search for images using storage, "onflight" (DEFAULT) is precalculate+search)
   --storage STORAGE, -p STORAGE
                         Path to a data storage (to be created or read)
 
-Precalculation (or onflight) mode:
+PRECALCULATION (or ONFLIGHT) mode arguments:
   --fork FORK, -f FORK  Number of parallel processes for precalculation (DEFAULT 1)
   --dir DIR, -d DIR     Path to the directory with images to precalculate data for
   --split-depth SPLIT_DEPTH, -s SPLIT_DEPTH
-                        When calculating average colors, all images are split into SPLIT_DEPTH**2 rectangles, average color is calculated for each of them. (DEFAULT 4)
+                        When calculating average colors, all images are split into SPLIT_DEPTH^2 rectangles, average color is calculated for each of them. (DEFAULT 4)
 
-Search (or onflight) mode:
+SEARCH (or ONFLIGHT) mode arguments:
   --target TARGET, -t TARGET
                         Path to the target image to search similar to (note that split depth is detected automatically from the storage)
 
-Output style of search (or onflight) mode:
+OUTPUT STYLE of search (or onflight) mode:
   --best-only, -b       Only print one image filename which is the best match
   --no-notes            Don't show constant notes for user, only print the final table
   --table-fmt TABLE_FMT
-                        Table format (explained in more detail in the `tabulate` library'sdocs). Use "plain" to not use any pseudo-graphics (DEFAULT "github")
+                        Table format (explained in detail in the `tabulate` library's docs). Use "plain" to not use any pseudo-graphics (DEFAULT "github")
   --no-headers          Don't show headers of the final table being printed
   --no-index            Don't show first column with indexes in the final table being printed
   --no-error-rate       Don't show last column with error rate in the final table being printed
 
 Examples:
-    With two commands:
-        ./find_most_similar_image.py --mode precalculate --storage storage.json --dir ./some_dir
-        ./find_most_similar_image.py --mode search --storage storage.json --target some_img.png
+    With two separate commands:
+        ./find_most_similar_image.py --mode precalculate --storage ./storage.json --dir ./source_dir
+        ./find_most_similar_image.py --mode search --storage ./storage.json --target ./image.png
     Or with one command:
-        ./find_most_similar_image.py --dir some_dir --target some_img.png
+        ./find_most_similar_image.py --dir ./source_dir --target ./image.png
     Also possible (to save storage):
-        ./find_most_similar_image.py --dir some_dir --target some_img.png --storage storage.json
-    When you want to omit any extra messages and, for example, use output as an argument to another command:
-        ./find_most_similar_image.py --storage storage.json --target some_img.png --dir ./some_dir --best-only --table-fmt=plain \
-            --no-headers --no-notes --no-index --no-error-rate
+        ./find_most_similar_image.py --dir ./source_dir --target ./image.png --storage ./storage.json
+    When you want to omit all extra messages and, for example, use the output as an argument to another command:
+        ./find_most_similar_image.py --dir ./source_dir --target ./image.png --best-only --table-fmt=plain --no-headers --no-notes \
+            --no-index --no-error-rate
 ```
 ## Algorithm overview
 The algorithm of looking for similar images is pretty simple.
