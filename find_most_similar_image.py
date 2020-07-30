@@ -47,7 +47,6 @@ def does_raise(func, args=None, kwargs=None, expected=None, *, reraise_other=Tru
             return False
 
 
-
 def chunkify(iterable, chunks_count):
     iterable = list(iterable)
     for i in range(chunks_count):
@@ -77,7 +76,7 @@ def get_avg_pixels(img, split_depth=2):
     return ans
 
 
-def get_avged_imgs_dist(a, b):
+def get_avged_images_dist(a, b):
     return np.sum(abs(a - b))
 
 
@@ -92,8 +91,8 @@ def precalculate_part(args):
 def precalculate(candidate_paths, output_file, /, split_depth=2, process_count=1):
     data = {}
 
-    idxs_and_chunks = enumerate(chunkify(candidate_paths, process_count))
-    args = map(lambda x: (x[1], split_depth, x[0]), idxs_and_chunks)
+    idxes_and_chunks = enumerate(chunkify(candidate_paths, process_count))
+    args = map(lambda x: (x[1], split_depth, x[0]), idxes_and_chunks)
 
     with Pool(process_count) as pool:
         for data_part in pool.imap_unordered(precalculate_part, args):
@@ -110,7 +109,7 @@ def get_sorted(target_path, storage_file, reverse=False):
     target = Image.open(target_path)
     target_avg = get_avg_pixels(target, split_depth)
     
-    rated_images = [(k, get_avged_imgs_dist(target_avg, precalculated_avgs[k])) for k in precalculated_avgs.keys()]
+    rated_images = [(k, get_avged_images_dist(target_avg, precalculated_avgs[k])) for k in precalculated_avgs.keys()]
     return sorted(rated_images, key=itemgetter(1), reverse=reverse)
 
 
@@ -137,28 +136,29 @@ examples = f'''Examples:
 if __name__ == "__main__":
     warnings.filterwarnings("ignore", category=UserWarning)
 
-
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter,
-            epilog=examples)
+                                     epilog=examples)
 
     common_group = parser.add_argument_group('Global args')
     common_group.add_argument('--mode', '-m', choices=['precalculate', 'search', 'onflight'],
-            help='The mode in which you want to run (`precalculate` to create storage, `search` to search '
-            'for images using storage, `onflight` (DEFAULT) is precalculate+search)',
-            default='onflight')
+                              help='The mode in which you want to run (`precalculate` to create storage, `search` to '
+                                   'search for images using storage, `onflight` (DEFAULT) is precalculate+search)',
+                              default='onflight')
     common_group.add_argument('--storage', '-p', help='Path to a data storage (to be created or read)')
 
     precalculation_group = parser.add_argument_group('Precalculation (or onflight) mode')
     precalculation_group.add_argument('--fork', '-f', help='Number of parallel processes for precalculation '
-        '(DEFAULT 1)', type=int, default=1)
-    precalculation_group.add_argument('--dir', '-d', help='Path to the direcotory with images to precalculate data for')
-    precalculation_group.add_argument('--split-depth', '-s', help='When calculating average colors, all images '
-        'are split into SPLIT_DEPTH**2 rectangles, average color is calculated for each of them. (DEFAULT 4)', type=int,
-        default=4)
+                                                           '(DEFAULT 1)', type=int, default=1)
+    precalculation_group.add_argument('--dir', '-d', help='Path to the directory with images to precalculate data for')
+    precalculation_group.add_argument('--split-depth', '-s', help='When calculating average colors, all images are '
+                                                                  'split into SPLIT_DEPTH**2 rectangles, average color '
+                                                                  'is calculated for each of them. (DEFAULT 4)',
+                                      type=int,
+                                      default=4)
 
     search_group = parser.add_argument_group('Search (or onflight) mode')
     search_group.add_argument('--target', '-t', help='Path to the target image to search similar to (note that split '
-            'depth is detected automatically from the storage)')
+                                                     'depth is detected automatically from the storage)')
 
     virtual_file = StringIO()
 
@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
     # Required args checks
     if args.storage is None and args.mode != 'onflight':
-            parser.error("--storage argument can only be omited in the `onflight` mode")
+        parser.error("--storage argument can only be omited in the `onflight` mode")
     if args.mode in ('precalculate', 'onflight'):
         if args.dir is None:
             parser.error("--dir argument is required in the current mode")
@@ -196,9 +196,9 @@ if __name__ == "__main__":
 
     # Searching
     if args.mode in ('search', 'onflight'):
-        print("I will reprint all the imags files. The lower they are in the list, the more they look like a target\n")
+        print("I will reprint all the images files. The lower they are in the list, the more they look like a target\n")
         rated_images = get_sorted(args.target, virtual_file, reverse=True)
         print(tabulate(rated_images, headers=("Path to image", "Error rate"), tablefmt="github", showindex=True))
         print("\nRemember that the printed list is reversed: the lower items are, the more they look like a target")
         print("Please, also, note, that \"Error rate\" (last column) can differ a lot for different split depths. "
-                "Don't compare error rates from runs with different split depths")
+              "Don't compare error rates from runs with different split depths")

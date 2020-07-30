@@ -129,5 +129,6 @@ dmypy.json
 .pyre/
 
 # Local
+.idea/
 # Ignore generated storages:
 **.json
