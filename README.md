@@ -3,9 +3,9 @@ Sorts an array of images by color similarity to a given image.
 
 Imagine you are given a directory with a HUGE amount of images inside and something like a screenshot of one of them.
 
-This script allows you to find an image (in fact images) visually nearest to a given (target) image.
+This script allows you to find an image (in fact images) visually nearest to a given (target) image. It prints a table with absolute paths to original images sorted by similarity so that last entry is the most similar to the target
 
-It also allows to quickly search for images, similar to different targets, if you are searching in the same folder
+It also allows to quickly search for images, similar to different targets, if you are searching in the same set of images.
 ## Basic usage
 ```
 $ ./find_most_similar_image.py -h
