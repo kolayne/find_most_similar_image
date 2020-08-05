@@ -1,4 +1,7 @@
 # Find most similar image
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/fcaeca742dd74cbd8f8bda03ba728310)](https://app.codacy.com/manual/kolayne/find_most_similar_image?utm_source=github.com&utm_medium=referral&utm_content=kolayne/find_most_similar_image&utm_campaign=Badge_Grade_Dashboard)
+
 Sorts an array of images by color similarity to a given image.
 
 Imagine you are given a directory with a HUGE amount of images inside and something like a screenshot of one of them.
