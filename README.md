@@ -1,6 +1,6 @@
 # Find most similar image
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/fcaeca742dd74cbd8f8bda03ba728310)](https://app.codacy.com/manual/kolayne/find_most_similar_image?utm_source=github.com&utm_medium=referral&utm_content=kolayne/find_most_similar_image&utm_campaign=Badge_Grade_Dashboard)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/55d712073a944bacb55944f83739a493)](https://www.codacy.com/gh/kolayne/find_most_similar_image/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=kolayne/find_most_similar_image&amp;utm_campaign=Badge_Grade)
 
 Sorts an array of images by color similarity to a given image.
 
