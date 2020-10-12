@@ -10,7 +10,7 @@ This script allows you to find an image (in fact images) visually nearest to a g
 
 It also allows to quickly search for images, similar to different targets, if you are searching in the same set of images.
 ## Basic usage
-```
+```sh
 $ ./find_most_similar_image.py -h
 usage: find_most_similar_image.py [--help]
                                   [--mode {precalculate,search,onflight}]
@@ -60,7 +60,7 @@ Examples:
             --no-index --no-error-rate
 ```
 ## Advanced usage
-```
+```sh
 $ ./find_most_similar_image.py -hh
 usage: find_most_similar_image.py [--help]
                                   [--mode {precalculate,search,onflight}]
@@ -132,4 +132,4 @@ Firstly (in `precalculate` mode), the app creates a storage with cached data of 
 
 After that (in `search` mode), the `--storage` file is read, the `--target` image is split into the same number of rectangles the candidates were split into, the average colors for the last rectangles are calculated. A distance between two images now is the sum of distances between corresponding average colors. All the images are sorted by a value called `Error rate` which is the distance between an image and the target image.
 ## Known issues
-* Tqdm bars may behave strange (for example, create empty lines or fake bars) when forking is used
+*   Tqdm bars may behave strange (for example, create empty lines or fake bars) when forking is used
