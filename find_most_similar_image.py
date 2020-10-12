@@ -25,7 +25,7 @@ try:
     from tabulate import tabulate
 except ImportError:
     print("`tabulate` library not found. This is not an issue, but I would recommend to install it")
-    def tabulate(x, *a, **k): return '\t'.join(x)
+    def tabulate(x, *a, **k): return '\n'.join('\t'.join(map(str, i)) for i in x)
 
 
 def does_raise(func, args=None, kwargs=None, expected=None, *, reraise_other=True):
@@ -78,7 +78,7 @@ def get_avg_pixels(img, split_depth=2):
 
 
 def get_avged_images_dist(a, b):
-    return np.sum(abs(a - b))
+    return np.sum(abs(a - b)).item()
 
 
 def precalculate_part(args):
