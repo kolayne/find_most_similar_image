@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from sys import argv
+from sys import argv, stderr
 from os import walk, path
 import json
 import argparse
@@ -11,21 +11,28 @@ from io import StringIO
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 
-try:
-    from tqdm import tqdm
-except ImportError:
-    print("`tqdm` library not found. This is not an issue, but I would recommend to install it")
-    def tqdm(x, *a, **k): return x
+
 try:
     from termcolor import colored
 except ImportError:
-    print("`termcolor` library not found. This is not an issue, but I would recommend to install it")
-    def colored(x, *a, **k): return x
+    print("`termcolor` LIBRARY NOT FOUND. This is not an issue, but I recommend installing it", file=stderr)
+    def colored(x, *a, **k):
+        return x
+try:
+    from tqdm import tqdm
+except ImportError:
+    print(colored("`tqdm` LIBRARY NOT FOUND. This is not an issue, but I recommend installing it", "red",
+                  attrs=['bold']), file=stderr)
+    def tqdm(x, *a, **k): return x
 try:
     from tabulate import tabulate
 except ImportError:
-    print("`tabulate` library not found. This is not an issue, but I would recommend to install it")
-    def tabulate(x, *a, **k): return '\n'.join('\t'.join(map(str, i)) for i in x)
+    print(colored("`tabulate` LIBRARY NOT FOUND. This is not an issue, but I recommend installing it", "red",
+                  attrs=['bold']), file=stderr)
+    def tabulate(x, *a, **k):
+        return '\n'.join(
+            '\t'.join(map(str, i)) for i in x
+        )
 
 
 def does_raise(func, args=None, kwargs=None, expected=None, *, reraise_other=True):
@@ -142,7 +149,6 @@ examples = f'''Examples:
         {argv[0]} --dir ./source_dir --target ./image.png --best-only --table-fmt=plain --no-headers --no-notes \\
             --no-index --no-error-rate
 '''
-
 
 if __name__ == "__main__":
     warnings.filterwarnings("ignore", category=UserWarning)
