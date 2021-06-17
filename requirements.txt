@@ -1,4 +1,4 @@
-Pillow~=8.1.1
+Pillow~=8.2.0
 numpy~=1.19.2
 tqdm~=4.50.2 # Not required but recommended
 tabulate~=0.8.7 # Not required but recommended
