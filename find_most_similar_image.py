@@ -93,7 +93,7 @@ def precalculate_part(args):
     split_depth = args[1]
     tqdm_position = args[2]
 
-    return {candidate_path: get_avg_pixels(Image.open(candidate_path).convert("RGB"), split_depth).tolist()
+    return {candidate_path: get_avg_pixels(Image.open(candidate_path).convert("RGBA"), split_depth).tolist()
             for candidate_path in tqdm(candidate_paths, position=tqdm_position)}
 
 def precalculate(candidate_paths, output_file, /, split_depth=2, process_count=1):
@@ -114,7 +114,7 @@ def get_sorted(target_path, storage_file, reverse=False):
     split_depth = precalculated['split_depth']
     precalculated_avgs = {k: np.asarray(v) for k, v in precalculated['data'].items()}
 
-    target = Image.open(target_path)
+    target = Image.open(target_path).convert("RGBA")
     target_avg = get_avg_pixels(target, split_depth)
 
     rated_images = [(k, get_avged_images_dist(target_avg, precalculated_avgs[k])) for k in precalculated_avgs.keys()]
